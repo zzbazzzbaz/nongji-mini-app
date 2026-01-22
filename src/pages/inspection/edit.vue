@@ -1,22 +1,5 @@
 <template>
   <view class="page-container">
-    <!-- OCR识别区域 -->
-    <view v-if="canUseOcr" class="card ocr-card">
-      <view class="card-header">
-        <text class="card-title">📷 OCR识别</text>
-      </view>
-      <view class="ocr-btns">
-        <button class="ocr-btn ocr-btn-license" @click="ocrLicense">
-          <text class="ocr-btn-icon">🪪</text>
-          <text>识别行驶证</text>
-        </button>
-        <button class="ocr-btn ocr-btn-plate" @click="ocrPlate">
-          <text class="ocr-btn-icon">🚗</text>
-          <text>识别车牌</text>
-        </button>
-      </view>
-    </view>
-
     <!-- 图片上传区域 -->
     <view class="card">
       <view class="card-header">
@@ -64,11 +47,22 @@
           <view v-if="images.headlight_report" class="upload-delete" @click.stop="removeImage('headlight_report')">×</view>
         </view>
       </view>
+      <!-- OCR识别按钮 -->
+      <view v-if="canUseOcr" class="ocr-btns">
+        <button class="ocr-btn" :disabled="!images.license_front && !images.license_back" @click="ocrLicense">
+          识别行驶证
+        </button>
+        <button class="ocr-btn ocr-btn-green" :disabled="!images.plate" @click="ocrPlate">
+          识别车牌号
+        </button>
+      </view>
     </view>
 
     <!-- 正页信息 -->
     <view class="card">
-      <view class="card-header"><text class="card-title">📋 正页信息</text></view>
+      <view class="card-header">
+        <text class="card-title">📋 正页信息</text>
+      </view>
       <view class="form-item">
         <text class="form-label required">号牌号码</text>
         <input v-model="form.license_plate_number" class="form-input" placeholder="请输入号牌号码" />
@@ -131,7 +125,9 @@
 
     <!-- 副页信息 -->
     <view class="card">
-      <view class="card-header"><text class="card-title">📄 副页信息</text></view>
+      <view class="card-header">
+        <text class="card-title">📄 副页信息</text>
+      </view>
       <view class="form-item">
         <text class="form-label">拖拉机最小使用质量</text>
         <input v-model="form.tractor_min_weight" class="form-input" placeholder="请输入" />
@@ -160,7 +156,9 @@
 
     <!-- 其他信息 -->
     <view class="card">
-      <view class="card-header"><text class="card-title">📝 其他信息</text></view>
+      <view class="card-header">
+        <text class="card-title">📝 其他信息</text>
+      </view>
       <view class="form-item">
         <text class="form-label">机身颜色</text>
         <input v-model="form.body_color" class="form-input" placeholder="请输入机身颜色" />
@@ -182,7 +180,9 @@
 
     <!-- 底部按钮 -->
     <view class="bottom-bar">
-      <button class="submit-btn" :loading="submitting" :disabled="submitting" @click="handleSubmit">保存修改</button>
+      <button class="submit-btn" :loading="submitting" :disabled="submitting" @click="handleSubmit">
+        保存修改
+      </button>
     </view>
   </view>
 </template>
@@ -249,6 +249,7 @@ const getImageUrl = (path) => {
   return getBaseUrl().replace("/api/v1", "") + path;
 };
 
+// 加载详情数据
 const loadDetail = async () => {
   uni.showLoading({ title: "加载中..." });
   try {
@@ -288,6 +289,7 @@ const loadDetail = async () => {
   }
 };
 
+// 选择图片
 const chooseImage = (type) => {
   uni.chooseImage({
     count: 1,
@@ -298,65 +300,88 @@ const chooseImage = (type) => {
   });
 };
 
+// 删除图片
 const removeImage = (type) => {
   images[type] = "";
 };
 
-const ocrLicense = () => {
-  uni.chooseImage({
-    count: 1,
-    sourceType: ["camera", "album"],
-    success: async (res) => {
-      const filePath = res.tempFilePaths[0];
-      images.license_front = filePath;
-      uni.showLoading({ title: "识别中..." });
-      try {
-        const ocrRes = await ocrDrivingLicense(filePath);
-        if (ocrRes.code === 200) {
-          Object.keys(ocrRes.data).forEach((key) => {
-            if (form.value.hasOwnProperty(key) && ocrRes.data[key]) {
-              form.value[key] = ocrRes.data[key];
-            }
-          });
-          uni.showToast({ title: "识别成功", icon: "success" });
-        } else {
-          uni.showToast({ title: ocrRes.message || "识别失败", icon: "none" });
-        }
-      } catch (e) {
-        uni.showToast({ title: "识别失败", icon: "none" });
-      } finally {
-        uni.hideLoading();
+// OCR识别行驶证（正页+副页都识别）
+const ocrLicense = async () => {
+  if (!images.license_front && !images.license_back) {
+    uni.showToast({ title: "请先上传行驶证图片", icon: "none" });
+    return;
+  }
+  
+  uni.showLoading({ title: "识别中..." });
+  try {
+    // 识别正页（只识别新上传的图片）
+    if (images.license_front && images.license_front !== originalImages.license_front) {
+      const ocrRes = await ocrDrivingLicense(images.license_front);
+      if (ocrRes.code === 200) {
+        Object.keys(ocrRes.data).forEach((key) => {
+          if (form.value.hasOwnProperty(key) && ocrRes.data[key]) {
+            form.value[key] = ocrRes.data[key];
+          }
+        });
       }
-    },
-  });
+    }
+    // 识别副页（只识别新上传的图片）
+    if (images.license_back && images.license_back !== originalImages.license_back) {
+      const ocrRes = await ocrDrivingLicense(images.license_back);
+      if (ocrRes.code === 200) {
+        Object.keys(ocrRes.data).forEach((key) => {
+          if (form.value.hasOwnProperty(key) && ocrRes.data[key]) {
+            form.value[key] = ocrRes.data[key];
+          }
+        });
+      }
+    }
+    uni.showToast({ title: "识别成功", icon: "success" });
+  } catch (e) {
+    uni.showToast({ title: "识别失败", icon: "none" });
+  } finally {
+    uni.hideLoading();
+  }
 };
 
-const ocrPlate = () => {
-  uni.chooseImage({
-    count: 1,
-    sourceType: ["camera", "album"],
-    success: async (res) => {
-      const filePath = res.tempFilePaths[0];
-      images.plate = filePath;
-      uni.showLoading({ title: "识别中..." });
-      try {
-        const ocrRes = await ocrLicensePlate(filePath);
-        if (ocrRes.code === 200) {
-          form.value.plate_ocr_result = ocrRes.data.plate_number;
-          if (!form.value.license_plate_number) {
-            form.value.license_plate_number = ocrRes.data.plate_number;
-          }
-          uni.showToast({ title: "识别成功", icon: "success" });
-        } else {
-          uni.showToast({ title: ocrRes.message || "识别失败", icon: "none" });
-        }
-      } catch (e) {
-        uni.showToast({ title: "识别失败", icon: "none" });
-      } finally {
-        uni.hideLoading();
+// OCR识别车牌（使用已上传的图片）
+const ocrPlate = async () => {
+  if (!images.plate) {
+    uni.showToast({ title: "请先上传车牌图片", icon: "none" });
+    return;
+  }
+  // 只识别新上传的图片
+  if (images.plate === originalImages.plate) {
+    uni.showToast({ title: "请上传新的车牌图片", icon: "none" });
+    return;
+  }
+  
+  uni.showLoading({ title: "识别中..." });
+  try {
+    const ocrRes = await ocrLicensePlate(images.plate);
+    if (ocrRes.code === 200) {
+      form.value.plate_ocr_result = ocrRes.data.plate_number;
+      if (!form.value.license_plate_number) {
+        form.value.license_plate_number = ocrRes.data.plate_number;
       }
-    },
-  });
+      uni.showToast({ title: "识别成功", icon: "success" });
+    } else {
+      uni.showToast({ title: ocrRes.message || "识别失败", icon: "none" });
+    }
+  } catch (e) {
+    uni.showToast({ title: "识别失败", icon: "none" });
+  } finally {
+    uni.hideLoading();
+  }
+};
+
+// 校验日期格式 YYYY-MM-DD
+const isValidDate = (dateStr) => {
+  if (!dateStr) return true;
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateStr)) return false;
+  const date = new Date(dateStr);
+  return date instanceof Date && !isNaN(date);
 };
 
 const handleSubmit = async () => {
@@ -364,6 +389,21 @@ const handleSubmit = async () => {
     uni.showToast({ title: "请输入号牌号码", icon: "none" });
     return;
   }
+  
+  // 校验日期字段
+  if (form.value.registration_date && !isValidDate(form.value.registration_date)) {
+    uni.showToast({ title: "登记日期格式不正确", icon: "none" });
+    return;
+  }
+  if (form.value.issue_date && !isValidDate(form.value.issue_date)) {
+    uni.showToast({ title: "发证日期格式不正确", icon: "none" });
+    return;
+  }
+  if (form.value.production_date && !isValidDate(form.value.production_date)) {
+    uni.showToast({ title: "生产日期格式不正确", icon: "none" });
+    return;
+  }
+  
   submitting.value = true;
   try {
     const data = {};
@@ -372,6 +412,7 @@ const handleSubmit = async () => {
         data[key] = form.value[key];
       }
     });
+    
     // 只上传新选择的图片（非原始URL）
     const files = {};
     if (images.license_front && images.license_front !== originalImages.license_front) {
@@ -440,51 +481,7 @@ onLoad((options) => {
   color: #333;
 }
 
-.ocr-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.ocr-card .card-header {
-  background: transparent;
-  border-bottom: 1rpx solid rgba(255, 255, 255, 0.2);
-}
-
-.ocr-card .card-title {
-  color: #fff;
-}
-
-.ocr-btns {
-  display: flex;
-  padding: 24rpx;
-  gap: 20rpx;
-}
-
-.ocr-btn {
-  flex: 1;
-  height: 100rpx;
-  border-radius: 12rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26rpx;
-  border: none;
-  gap: 8rpx;
-}
-
-.ocr-btn-license {
-  background: rgba(255, 255, 255, 0.95);
-  color: #667eea;
-}
-
-.ocr-btn-plate {
-  background: rgba(255, 255, 255, 0.95);
-  color: #07c160;
-}
-
-.ocr-btn-icon {
-  font-size: 32rpx;
-}
-
+/* 图片上传 */
 .image-upload-grid {
   display: flex;
   flex-wrap: wrap;
@@ -544,6 +541,38 @@ onLoad((options) => {
   border-radius: 0 0 0 12rpx;
 }
 
+/* OCR按钮 */
+.ocr-btns {
+  display: flex;
+  padding: 20rpx;
+  padding-top: 0;
+  gap: 16rpx;
+}
+
+.ocr-btn {
+  flex: 1;
+  height: 72rpx;
+  background: #1989fa;
+  color: #fff;
+  font-size: 26rpx;
+  border-radius: 8rpx;
+  border: none;
+}
+
+.ocr-btn[disabled] {
+  background: #ccc;
+  color: #fff;
+}
+
+.ocr-btn-green {
+  background: #07c160;
+}
+
+.ocr-btn-green[disabled] {
+  background: #ccc;
+}
+
+/* 表单 */
 .form-item {
   padding: 20rpx 28rpx;
   border-bottom: 1rpx solid #f5f5f5;
@@ -592,6 +621,7 @@ onLoad((options) => {
   font-size: 32rpx;
 }
 
+/* 底部按钮 */
 .bottom-bar {
   position: fixed;
   left: 0;
