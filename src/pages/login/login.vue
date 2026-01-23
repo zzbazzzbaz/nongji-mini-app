@@ -1,9 +1,9 @@
 <template>
   <view class="min-h-screen bg-[#f5f5f5] flex flex-col items-center pt-[200rpx]">
-    <view class="w-[120rpx] h-[120rpx] rounded-full bg-primary flex items-center justify-center mb-[48rpx]">
-      <text class="text-white text-[48rpx]">农</text>
+    <view class="w-[120rpx] h-[120rpx] rounded-full flex items-center justify-center mb-[48rpx]">
+      <image src="/static/tabbar/logo.png" mode="aspectFit" class="w-full h-full" />
     </view>
-    <text class="text-[36rpx] font-bold mb-[80rpx]">农机检测系统</text>
+    <text class="text-[36rpx] font-bold mb-[80rpx]">恒拓农机检测系统</text>
 
     <view class="w-[90%] bg-white rounded-[16rpx] p-[32rpx]">
       <view class="mb-[32rpx]">

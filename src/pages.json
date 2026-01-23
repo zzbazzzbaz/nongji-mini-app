@@ -3,7 +3,7 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "农机检测"
+        "navigationBarTitleText": "恒拓农机检测"
       }
     },
     {
@@ -40,7 +40,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "农机检测",
+    "navigationBarTitleText": "恒拓农机检测",
     "navigationBarBackgroundColor": "#ffffff",
     "backgroundColor": "#f5f5f5"
   },

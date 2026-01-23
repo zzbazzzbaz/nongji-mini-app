@@ -16,18 +16,12 @@
     <!-- 功能入口 -->
     <view class="bg-white rounded-[16rpx] p-[32rpx]">
       <text class="text-[28rpx] text-[#999] mb-[24rpx] block">快捷操作</text>
-      <view class="flex flex-wrap">
-        <view class="w-1/2 flex flex-col items-center py-[24rpx]" @click="goCreate">
+      <view class="flex flex-wrap justify-center">
+        <view class="flex flex-col items-center py-[24rpx]" @click="goCreate">
           <view class="w-[80rpx] h-[80rpx] rounded-[16rpx] bg-primary flex items-center justify-center mb-[16rpx]">
             <text class="text-white text-[40rpx]">+</text>
           </view>
-          <text class="text-[28rpx]">新建检验</text>
-        </view>
-        <view v-if="userInfo.can_use_ocr" class="w-1/2 flex flex-col items-center py-[24rpx]" @click="goOcrCreate">
-          <view class="w-[80rpx] h-[80rpx] rounded-[16rpx] bg-[#1989fa] flex items-center justify-center mb-[16rpx]">
-            <text class="text-white text-[32rpx]">OCR</text>
-          </view>
-          <text class="text-[28rpx]">拍照识别</text>
+          <text class="text-[28rpx]">新增检测</text>
         </view>
       </view>
     </view>
@@ -67,10 +61,6 @@ const loadUserInfo = async () => {
 
 const goCreate = () => {
   uni.navigateTo({ url: "/pages/inspection/create" });
-};
-
-const goOcrCreate = () => {
-  uni.navigateTo({ url: "/pages/inspection/create?ocr=1" });
 };
 
 const handleLogout = () => {

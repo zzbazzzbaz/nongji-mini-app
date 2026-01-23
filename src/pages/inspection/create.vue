@@ -6,7 +6,8 @@
         <text class="card-title">📎 图片资料</text>
       </view>
       <view class="image-upload-grid">
-        <view class="image-upload-item" @click="chooseImage('license_front')">
+        <!-- OCR用户专属：行驶证正面、行驶证副页、车牌图片 -->
+        <view v-if="canUseOcr" class="image-upload-item" @click="chooseImage('license_front')">
           <image v-if="images.license_front" :src="images.license_front" mode="aspectFill" class="upload-preview" />
           <view v-else class="upload-placeholder">
             <text class="upload-icon">+</text>
@@ -14,7 +15,7 @@
           </view>
           <view v-if="images.license_front" class="upload-delete" @click.stop="removeImage('license_front')">×</view>
         </view>
-        <view class="image-upload-item" @click="chooseImage('license_back')">
+        <view v-if="canUseOcr" class="image-upload-item" @click="chooseImage('license_back')">
           <image v-if="images.license_back" :src="images.license_back" mode="aspectFill" class="upload-preview" />
           <view v-else class="upload-placeholder">
             <text class="upload-icon">+</text>
@@ -22,7 +23,7 @@
           </view>
           <view v-if="images.license_back" class="upload-delete" @click.stop="removeImage('license_back')">×</view>
         </view>
-        <view class="image-upload-item" @click="chooseImage('plate')">
+        <view v-if="canUseOcr" class="image-upload-item" @click="chooseImage('plate')">
           <image v-if="images.plate" :src="images.plate" mode="aspectFill" class="upload-preview" />
           <view v-else class="upload-placeholder">
             <text class="upload-icon">+</text>
@@ -30,6 +31,7 @@
           </view>
           <view v-if="images.plate" class="upload-delete" @click.stop="removeImage('plate')">×</view>
         </view>
+        <!-- 所有用户可见：制动检验报告、前照灯检验报告 -->
         <view class="image-upload-item" @click="chooseImage('brake_report')">
           <image v-if="images.brake_report" :src="images.brake_report" mode="aspectFill" class="upload-preview" />
           <view v-else class="upload-placeholder">
